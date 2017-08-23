@@ -13,6 +13,13 @@ class BundleRepoHandler {
         return configObject['bundleHash'];
     }
 
+    getLatestBundleVersion(orgId) {
+        var configObject = this.getConfigObject(orgId);
+        if(configObject) {
+            return configObject['versionId'];
+        }
+    }
+
     incrementLatestVersionId(orgId) {
         var configObject = this.getConfigObject(orgId);
         if(configObject) {
@@ -44,25 +51,20 @@ class BundleRepoHandler {
             this.configObjects[orgId] = this.readConfigObject(orgId);
         }
 
-        var configObject = this.configObjects[orgId];
-        return configObject;
+        return this.configObjects[orgId];
     }
 
     getLatestBundlePath(orgId) {
         var configObject = this.getConfigObject(orgId);
         if(configObject.versionId) {
             let baseBundleFolder = appConfig.bundleRepoBase + orgId;
-            let bundlePath = baseBundleFolder + "/" + configObject.versionId + "/bundle.js";
-
-            return bundlePath;
+            return baseBundleFolder + "/" + configObject.versionId + "/bundle.js";
         }
     }
 
     getBundlePathForVersion(version, orgId) {
         let baseBundleFolder = appConfig.bundleRepoBase + orgId;
-        let bundlePath = baseBundleFolder + "/" + version + "/bundle.js";
-
-        return bundlePath;
+        return baseBundleFolder + "/" + version + "/bundle.js";
     }
 
     syncConfigObject(configObject, orgId) {
@@ -93,8 +95,7 @@ class BundleRepoHandler {
             fs.mkdirSync(baseBundleFolder);
         }
 
-        let configFilePath = baseBundleFolder + "/bundle.json";
-        return configFilePath;
+        return baseBundleFolder + "/bundle.json";
     }
 }
 

@@ -8,7 +8,7 @@ const appConfig = require('../services/config');
 var router = express.Router();
 
 /* GET users listing. */
-router.get('/hello', function(req, res, next) {
+router.get('/hello', function (req, res) {
     res.json({message : 'Hello from Bundler Service'});
 });
 
@@ -62,9 +62,14 @@ router.post('/upload', function (req, res, next)  {
     });
 });
 
-router.get('/fetch', function (req, res, next)  {
+router.get('/fetch', function (req, res) {
     let clientVersion = req.param('version');
     let orgId = req.param('orgId');
+    if(typeof orgId === 'undefined') {
+        return res.status(500).send({
+            message: "Required Param orgId is missing"
+        });
+    }
     let latestVersion = bundleRepoHandler.getLatestBundleVersion(orgId);
 
     if(typeof clientVersion === 'undefined') {
