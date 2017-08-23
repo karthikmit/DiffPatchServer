@@ -1,9 +1,9 @@
 var express = require('express');
 var bundleRepoHandler = require('../services/bundleRepoHandler');
-var googleDiffEngine = require('./diff-match-patch');
+var googleDiffEngine = require('../libs/diff-match-patch');
 var fileSystemEngine = require('fs');
 var revHash = require('rev-hash');
-const appConfig = require('./config');
+const appConfig = require('../services/config');
 
 var router = express.Router();
 
@@ -32,17 +32,30 @@ router.post('/upload', function (req, res, next)  {
         var currentVersionHash = revHash(fileSystemEngine.readFileSync(tempPath));
         var latestVersionHash = bundleRepoHandler.getLatestVersionHash(orgId);
 
+        if(typeof latestVersionHash === 'undefined') {
+            // This is the first bundle, create and return.
+            bundleRepoHandler.updateConfigObject({
+                versionId: 0,
+                bundleHash: currentVersionHash
+            }, orgId);
+        }
+
         if(currentVersionHash === latestVersionHash) {
             // Simply ignore the file uploaded.
         } else {
             var latestVersionId = bundleRepoHandler.incrementLatestVersionId(orgId);
-            var newBundleFolder = appConfig.bundleRepoBase + latestVersionId;
-            if (!fs.existsSync(newBundleFolder)){
-                fs.mkdirSync(newBundleFolder);
+            if(!latestVersionId) {
+                return res.status(500).send({});
+            }
+
+            var newBundleFolder = appConfig.bundleRepoBase + orgId + "/" + latestVersionId;
+            if (!fileSystemEngine.existsSync(newBundleFolder)){
+                fileSystemEngine.mkdirSync(newBundleFolder);
             }
 
             var newBundlePath = newBundleFolder + "/bundle.js";
-            fs.createReadStream(tempPath).pipe(fileSystemEngine.createWriteStream(newBundlePath));
+            fileSystemEngine.createReadStream(tempPath).pipe(fileSystemEngine.createWriteStream(newBundlePath));
+            bundleRepoHandler.updateLatestBundleHash(currentVersionHash, orgId);
         }
 
         res.send('File uploaded!');

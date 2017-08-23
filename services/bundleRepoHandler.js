@@ -1,4 +1,4 @@
-var fileSystemEngine = require('fs');
+var fs = require('fs');
 const appConfig = require('./config');
 
 class BundleRepoHandler {
@@ -18,8 +18,25 @@ class BundleRepoHandler {
         if(configObject) {
             configObject['versionId'] += 1;
             this.syncConfigObject(configObject, orgId);
+            return configObject['versionId'];
+        }
+    }
+
+    updateLatestBundleHash(newHash, orgId) {
+        var configObject = this.getConfigObject(orgId);
+        if(configObject) {
+            configObject['bundleHash'] = newHash;
+            this.syncConfigObject(configObject, orgId);
             return true;
         }
+    }
+
+    updateConfigObject(configNew, orgId) {
+        var configObject = this.getConfigObject(orgId);
+        configObject['versionId'] = configNew['versionId'];
+        configObject['bundleHash'] = configNew['bundleHash'];
+
+        this.syncConfigObject(configObject, orgId);
     }
 
     getConfigObject(orgId) {
@@ -50,7 +67,10 @@ class BundleRepoHandler {
 
     syncConfigObject(configObject, orgId) {
         var configPath = this.getBundleConfigPath(orgId);
-        fs.writeFileSync(configPath, JSON.stringify(configObject));
+        console.log("Config to be written :: " + configObject);
+        var configString = JSON.stringify(configObject);
+        console.log("Config to be written :: " + configString);
+        fs.writeFileSync(configPath, configString);
     }
 
     readConfigObject(orgId) {
@@ -62,7 +82,9 @@ class BundleRepoHandler {
             };
             this.syncConfigObject(configObject, orgId);
         }
-        return fs.readFileSync(configFilePath);
+        var fileContent = fs.readFileSync(configFilePath).toString();
+
+        return JSON.parse(fileContent);
     }
 
     getBundleConfigPath(orgId) {
